@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MusicNote } from "@mui/icons-material";
 
 const Splash = () => {
   const navigate = useNavigate();
@@ -24,7 +23,11 @@ const Splash = () => {
       {/* Logo and text */}
       <div className="relative z-10 text-center animate-fade-in">
         <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-primary mb-8 animate-pulse-glow">
-          <MusicNote className="w-16 h-16 text-white animate-bounce" />
+          <img
+            src="/logo.png"
+            alt="Youth Tunes Logo"
+            className="w-16 h-16 animate-bounce"
+          />
         </div>
         <h1 className="text-6xl font-bold gradient-text mb-4 animate-slide-up">
           Youth Tunes
