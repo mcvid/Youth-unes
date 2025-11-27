@@ -1,18 +1,18 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { toast } from '@/hooks/use-toast';
-import { User } from '@supabase/supabase-js';
-import { 
-  Person, 
-  CloudSync, 
-  Storage, 
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "@/hooks/use-toast";
+import { User } from "@supabase/supabase-js";
+import {
+  Person,
+  CloudSync,
+  Storage,
   Info,
   Brightness4,
-  Logout 
-} from '@mui/icons-material';
+  Logout,
+} from "@mui/icons-material";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -22,12 +22,12 @@ const Profile = () => {
   const [offlineMode, setOfflineMode] = useState(false);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
-    );
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
@@ -41,16 +41,16 @@ const Profile = () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
-        title: 'Logout Failed',
+        title: "Logout Failed",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     } else {
       toast({
-        title: 'Logged out',
-        description: 'See you next time!',
+        title: "Logged out",
+        description: "See you next time!",
       });
-      navigate('/auth');
+      navigate("/auth");
     }
   };
 
@@ -69,7 +69,9 @@ const Profile = () => {
         <div className="w-24 h-24 rounded-full bg-gradient-primary mx-auto mb-4 flex items-center justify-center">
           <Person className="h-12 w-12" />
         </div>
-        <h1 className="text-2xl font-bold mb-1">{user?.user_metadata?.username || 'Music Lover'}</h1>
+        <h1 className="text-2xl font-bold mb-1">
+          {user?.user_metadata?.username || "Music Lover"}
+        </h1>
         <p className="text-muted-foreground">{user?.email}</p>
       </div>
 
@@ -141,14 +143,14 @@ const Profile = () => {
             </Button>
             <Button variant="outline" className="w-full justify-start gap-2">
               <Info className="h-5 w-5" />
-              About Mcvix Music
+              About Youth Tunes
             </Button>
           </div>
         </section>
 
         {/* Logout */}
-        <Button 
-          variant="destructive" 
+        <Button
+          variant="destructive"
           className="w-full gap-2"
           onClick={handleLogout}
         >

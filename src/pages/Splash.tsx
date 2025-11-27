@@ -1,13 +1,13 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { MusicNote } from '@mui/icons-material';
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { MusicNote } from "@mui/icons-material";
 
 const Splash = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate('/auth');
+      navigate("/auth");
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -27,7 +27,7 @@ const Splash = () => {
           <MusicNote className="w-16 h-16 text-white animate-bounce" />
         </div>
         <h1 className="text-6xl font-bold gradient-text mb-4 animate-slide-up">
-          Mcvix Music
+          Youth Tunes
         </h1>
         <p className="text-xl text-muted-foreground animate-fade-in">
           Your music, everywhere
