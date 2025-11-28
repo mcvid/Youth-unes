@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import { Song } from './playerStore';
 
 interface LibraryState {
@@ -29,63 +30,75 @@ export interface Playlist {
   coverUrl?: string;
 }
 
-export const useLibraryStore = create<LibraryState>((set, get) => ({
-  localSongs: [],
-  cloudSongs: [],
-  myLibrary: [],
-  playlists: [],
-  recentlyPlayed: [],
+export const useLibraryStore = create<LibraryState>()(
+  persist(
+    (set, get) => ({
+      localSongs: [],
+      cloudSongs: [],
+      myLibrary: [],
+      playlists: [],
+      recentlyPlayed: [],
 
-  setLocalSongs: (songs) => set({ localSongs: songs }),
-  
-  setCloudSongs: (songs) => set({ cloudSongs: songs }),
-  
-  setMyLibrary: (songs) => set({ myLibrary: songs }),
-  
-  addToMyLibrary: (song) => set((state) => ({
-    myLibrary: [...state.myLibrary, song]
-  })),
-  
-  removeFromMyLibrary: (songId) => set((state) => ({
-    myLibrary: state.myLibrary.filter(s => s.song_id_hash !== songId)
-  })),
-  
-  isInMyLibrary: (songId) => {
-    return get().myLibrary.some(s => s.song_id_hash === songId);
-  },
-  
-  addToRecentlyPlayed: (song) => set((state) => ({
-    recentlyPlayed: [
-      song,
-      ...state.recentlyPlayed.filter(s => s.song_id_hash !== song.song_id_hash)
-    ].slice(0, 20)
-  })),
-  
-  createPlaylist: (name) => set((state) => ({
-    playlists: [
-      ...state.playlists,
-      {
-        id: `playlist_${Date.now()}`,
-        name,
-        songs: [],
-        createdAt: new Date(),
-      }
-    ]
-  })),
-  
-  addSongToPlaylist: (playlistId, song) => set((state) => ({
-    playlists: state.playlists.map(playlist =>
-      playlist.id === playlistId
-        ? { ...playlist, songs: [...playlist.songs, song] }
-        : playlist
-    )
-  })),
-  
-  removeSongFromPlaylist: (playlistId, songId) => set((state) => ({
-    playlists: state.playlists.map(playlist =>
-      playlist.id === playlistId
-        ? { ...playlist, songs: playlist.songs.filter(s => s.song_id_hash !== songId) }
-        : playlist
-    )
-  })),
-}));
+      setLocalSongs: (songs) => set({ localSongs: songs }),
+      
+      setCloudSongs: (songs) => set({ cloudSongs: songs }),
+      
+      setMyLibrary: (songs) => set({ myLibrary: songs }),
+      
+      addToMyLibrary: (song) => set((state) => ({
+        myLibrary: [...state.myLibrary, song]
+      })),
+      
+      removeFromMyLibrary: (songId) => set((state) => ({
+        myLibrary: state.myLibrary.filter(s => s.song_id_hash !== songId)
+      })),
+      
+      isInMyLibrary: (songId) => {
+        return get().myLibrary.some(s => s.song_id_hash === songId);
+      },
+      
+      addToRecentlyPlayed: (song) => set((state) => ({
+        recentlyPlayed: [
+          song,
+          ...state.recentlyPlayed.filter(s => s.song_id_hash !== song.song_id_hash)
+        ].slice(0, 20)
+      })),
+      
+      createPlaylist: (name) => set((state) => ({
+        playlists: [
+          ...state.playlists,
+          {
+            id: `playlist_${Date.now()}`,
+            name,
+            songs: [],
+            createdAt: new Date(),
+          }
+        ]
+      })),
+      
+      addSongToPlaylist: (playlistId, song) => set((state) => ({
+        playlists: state.playlists.map(playlist =>
+          playlist.id === playlistId
+            ? { ...playlist, songs: [...playlist.songs, song] }
+            : playlist
+        )
+      })),
+      
+      removeSongFromPlaylist: (playlistId, songId) => set((state) => ({
+        playlists: state.playlists.map(playlist =>
+          playlist.id === playlistId
+            ? { ...playlist, songs: playlist.songs.filter(s => s.song_id_hash !== songId) }
+            : playlist
+        )
+      })),
+    }),
+    {
+      name: 'youth-tunes-library-storage',
+      partialize: (state) => ({
+        localSongs: state.localSongs,
+        playlists: state.playlists,
+        recentlyPlayed: state.recentlyPlayed,
+      }),
+    }
+  )
+);

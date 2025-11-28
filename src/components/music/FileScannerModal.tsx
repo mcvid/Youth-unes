@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Progress } from '@/components/ui/progress';
@@ -6,26 +6,36 @@ import { toast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useLibraryStore } from '@/store/libraryStore';
 import { Song } from '@/store/playerStore';
+import { MusicNote, FolderOpen } from '@mui/icons-material';
 
 interface FileScannerModalProps {
   open: boolean;
   onClose: () => void;
 }
 
+// Supported audio formats with MIME types for mobile compatibility
+const AUDIO_MIME_TYPES = [
+  'audio/mpeg',           // .mp3
+  'audio/mp4',            // .m4a
+  'audio/aac',            // .aac
+  'audio/wav',            // .wav
+  'audio/ogg',            // .ogg
+  'audio/flac',           // .flac
+  'audio/opus',           // .opus
+  'audio/x-m4a',          // .m4a alternate
+  'audio/x-aiff',         // .aiff
+  'audio/aiff',           // .aiff
+  'audio/webm',           // .webm
+  'audio/*',              // fallback
+];
+
+const AUDIO_EXTENSIONS = '.mp3,.m4a,.aac,.wav,.ogg,.flac,.opus,.alac,.aiff,.webm';
+
 const FileScannerModal = ({ open, onClose }: FileScannerModalProps) => {
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState(0);
-  const { setLocalSongs, setCloudSongs } = useLibraryStore();
-
-  // Auto-trigger scan when modal opens
-  useEffect(() => {
-    if (open && !scanning) {
-      const timer = setTimeout(() => {
-        handleScanFiles();
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [open]);
+  const { setLocalSongs, localSongs, setCloudSongs } = useLibraryStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const generateHash = async (file: File): Promise<string> => {
     const buffer = await file.arrayBuffer();
@@ -45,88 +55,111 @@ const FileScannerModal = ({ open, onClose }: FileScannerModalProps) => {
     };
   };
 
-  const handleScanFiles = async () => {
-    try {
-      setScanning(true);
-      setProgress(0);
+  const isAudioFile = (file: File): boolean => {
+    // Check MIME type
+    if (file.type.startsWith('audio/')) return true;
+    
+    // Fallback: check file extension
+    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    return AUDIO_EXTENSIONS.split(',').includes(ext);
+  };
 
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'audio/*';
-      input.multiple = true;
-
-      input.onchange = async (e) => {
-        const files = Array.from((e.target as HTMLInputElement).files || []);
-        if (files.length === 0) {
-          setScanning(false);
-          return;
-        }
-
-        const scannedSongs: Song[] = [];
-        const filesToUpload: File[] = [];
-
-        // Scan and add to local store immediately
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          setProgress(((i + 1) / files.length) * 100);
-
-          try {
-            const hash = await generateHash(file);
-            const metadata = await extractMetadata(file);
-            
-            const song: Song = {
-              song_id_hash: hash,
-              title: metadata.title || file.name.replace(/\.[^/.]+$/, ''),
-              artist: metadata.artist || 'Unknown Artist',
-              album: metadata.album || 'Unknown Album',
-              duration: 0,
-              audio_url: URL.createObjectURL(file),
-            };
-
-            scannedSongs.push(song);
-            filesToUpload.push(file);
-          } catch (error) {
-            console.error('Error processing file:', file.name, error);
-          }
-        }
-
-        // Add to local store immediately
-        setLocalSongs(scannedSongs);
-        setScanning(false);
-        
-        toast({
-          title: "Music Added",
-          description: `${scannedSongs.length} songs ready to play`,
-        });
-
-        // Close modal to show songs
-        onClose();
-
-        // Upload to cloud in background silently
-        if (filesToUpload.length > 0) {
-          handleUploadToCloud(filesToUpload);
-        }
-      };
-
-      input.click();
-    } catch (error) {
-      console.error('Error scanning files:', error);
-      setScanning(false);
+  const processFiles = async (files: FileList | File[]) => {
+    const fileArray = Array.from(files).filter(isAudioFile);
+    
+    if (fileArray.length === 0) {
       toast({
-        title: "Error",
-        description: "Failed to scan files. Please try again.",
+        title: "No audio files",
+        description: "Please select audio files (.mp3, .m4a, .aac, .wav, .ogg, .flac, .opus)",
         variant: "destructive",
       });
+      setScanning(false);
+      return;
+    }
+
+    const scannedSongs: Song[] = [];
+    const filesToUpload: File[] = [];
+
+    for (let i = 0; i < fileArray.length; i++) {
+      const file = fileArray[i];
+      setProgress(((i + 1) / fileArray.length) * 100);
+
+      try {
+        const hash = await generateHash(file);
+        const metadata = await extractMetadata(file);
+        
+        // Check if song already exists in local library
+        const exists = localSongs.some(s => s.song_id_hash === hash);
+        if (exists) {
+          console.log('Song already in library:', file.name);
+          continue;
+        }
+        
+        const song: Song = {
+          song_id_hash: hash,
+          title: metadata.title || file.name.replace(/\.[^/.]+$/, ''),
+          artist: metadata.artist || 'Unknown Artist',
+          album: metadata.album || 'Unknown Album',
+          duration: 0,
+          audio_url: URL.createObjectURL(file),
+        };
+
+        scannedSongs.push(song);
+        filesToUpload.push(file);
+      } catch (error) {
+        console.error('Error processing file:', file.name, error);
+      }
+    }
+
+    if (scannedSongs.length > 0) {
+      // Merge with existing local songs
+      setLocalSongs([...localSongs, ...scannedSongs]);
+      
+      toast({
+        title: "Music Added",
+        description: `${scannedSongs.length} new songs ready to play`,
+      });
+
+      // Upload to cloud in background silently
+      if (filesToUpload.length > 0) {
+        handleUploadToCloud(filesToUpload);
+      }
+    } else {
+      toast({
+        title: "No new songs",
+        description: "All selected songs are already in your library",
+      });
+    }
+
+    setScanning(false);
+    onClose();
+  };
+
+  const handleFileInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) {
+      setScanning(false);
+      return;
+    }
+
+    setScanning(true);
+    setProgress(0);
+    await processFiles(files);
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
+  const handleSelectFiles = () => {
+    fileInputRef.current?.click();
+  };
+
   const handleUploadToCloud = async (files: File[]) => {
-    // Background upload - no UI blocking
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-
-      let uploaded = 0;
 
       for (const file of files) {
         const hash = await generateHash(file);
@@ -139,7 +172,6 @@ const FileScannerModal = ({ open, onClose }: FileScannerModalProps) => {
           .single();
 
         if (existing) {
-          console.log('Song already in cloud:', file.name);
           continue;
         }
 
@@ -163,7 +195,7 @@ const FileScannerModal = ({ open, onClose }: FileScannerModalProps) => {
         const metadata = await extractMetadata(file);
 
         // Insert song record
-        const { error: insertError } = await supabase
+        await supabase
           .from('songs')
           .insert({
             song_id_hash: hash,
@@ -174,10 +206,6 @@ const FileScannerModal = ({ open, onClose }: FileScannerModalProps) => {
             audio_url: publicUrl,
             uploaded_by: user.id,
           });
-
-        if (!insertError) {
-          uploaded++;
-        }
       }
 
       // Fetch all cloud songs after upload
@@ -187,7 +215,6 @@ const FileScannerModal = ({ open, onClose }: FileScannerModalProps) => {
         .order('created_at', { ascending: false });
 
       if (cloudSongs) {
-        // Only set songs from other users as "cloud"
         const otherSongs = cloudSongs.filter(s => s.uploaded_by !== user.id);
         setCloudSongs(otherSongs.map(song => ({
           song_id_hash: song.song_id_hash,
@@ -200,10 +227,6 @@ const FileScannerModal = ({ open, onClose }: FileScannerModalProps) => {
           cover_url: song.cover_url,
         })));
       }
-
-      // ... keep existing code (fetch cloud songs)
-      
-      // Silent background upload complete - no notification
     } catch (error) {
       console.error('Background upload error:', error);
     }
@@ -211,33 +234,55 @@ const FileScannerModal = ({ open, onClose }: FileScannerModalProps) => {
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Scan Local Music</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <MusicNote className="h-5 w-5 text-primary" />
+            Add Music
+          </DialogTitle>
           <DialogDescription>
-            Select audio files from your device to add to your library
+            Select audio files from your device
           </DialogDescription>
         </DialogHeader>
 
-        {!scanning && (
+        {/* Hidden file input with mobile-optimized accept attribute */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept={`${AUDIO_EXTENSIONS},${AUDIO_MIME_TYPES.join(',')}`}
+          multiple
+          onChange={handleFileInputChange}
+          className="hidden"
+          // capture attribute removed to allow file picker on mobile
+        />
+
+        {!scanning ? (
           <div className="space-y-4">
             <Button 
-              onClick={handleScanFiles}
-              className="w-full"
+              onClick={handleSelectFiles}
+              className="w-full h-32 flex flex-col gap-2 bg-secondary hover:bg-secondary/80"
               size="lg"
             >
-              Select Audio Files
+              <FolderOpen className="h-8 w-8" />
+              <span>Browse Files</span>
             </Button>
-            <p className="text-sm text-muted-foreground text-center">
-              Your songs will be ready to play instantly
-            </p>
+            
+            <div className="text-center space-y-1">
+              <p className="text-sm text-muted-foreground">
+                Supported: MP3, M4A, AAC, WAV, OGG, FLAC, OPUS, AIFF
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Tip: Name files as "Title - Artist - Album" for auto-tagging
+              </p>
+            </div>
           </div>
-        )}
-
-        {scanning && (
-          <div className="space-y-4">
+        ) : (
+          <div className="space-y-4 py-4">
             <div className="text-center">
-              <p className="text-lg font-semibold mb-2">Scanning Files...</p>
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                <MusicNote className="h-8 w-8 text-primary animate-pulse" />
+              </div>
+              <p className="text-lg font-semibold mb-2">Processing...</p>
               <Progress value={progress} className="mb-2" />
               <p className="text-sm text-muted-foreground">
                 {Math.round(progress)}% complete

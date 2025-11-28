@@ -1,17 +1,16 @@
-import { useEffect, useState } from "react";
-import { useLibraryStore } from "@/store/libraryStore";
-import { usePlayerStore, Song } from "@/store/playerStore";
-import { useUserLibrary } from "@/hooks/useUserLibrary";
-import { supabase } from "@/integrations/supabase/client";
-import SongCard from "@/components/music/SongCard";
-import FileScannerModal from "@/components/music/FileScannerModal";
-import { Button } from "@/components/ui/button";
-import { ChevronRight } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from 'react';
+import { useLibraryStore } from '@/store/libraryStore';
+import { usePlayerStore, Song } from '@/store/playerStore';
+import { useUserLibrary } from '@/hooks/useUserLibrary';
+import { supabase } from '@/integrations/supabase/client';
+import SongCard from '@/components/music/SongCard';
+import FileScannerModal from '@/components/music/FileScannerModal';
+import { Button } from '@/components/ui/button';
+import { ChevronRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
-  const { localSongs, myLibrary, cloudSongs, setCloudSongs } =
-    useLibraryStore();
+  const { localSongs, myLibrary, cloudSongs, setCloudSongs } = useLibraryStore();
   const { setCurrentSong, setQueue } = usePlayerStore();
   const { refreshLibrary } = useUserLibrary();
   const [showScanner, setShowScanner] = useState(false);
@@ -25,26 +24,21 @@ const Home = () => {
   // Check if this is first login and show scanner
   useEffect(() => {
     const checkFirstLogin = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
       const hasScanned = localStorage.getItem(`scanned_${user.id}`);
-
+      
       if (!hasScanned) {
         // Check if user has any local songs OR uploaded songs
         const localSongs = useLibraryStore.getState().localSongs;
         const { data: cloudSongs } = await supabase
-          .from("songs")
-          .select("id")
-          .eq("uploaded_by", user.id)
+          .from('songs')
+          .select('id')
+          .eq('uploaded_by', user.id)
           .limit(1);
 
-        if (
-          localSongs.length === 0 &&
-          (!cloudSongs || cloudSongs.length === 0)
-        ) {
+        if (localSongs.length === 0 && (!cloudSongs || cloudSongs.length === 0)) {
           setShowScanner(true);
         }
       }
@@ -58,32 +52,28 @@ const Home = () => {
   // Fetch cloud songs on mount
   useEffect(() => {
     const fetchCloudSongs = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Fetch all songs from database
       const { data: songs } = await supabase
-        .from("songs")
-        .select("*")
-        .order("created_at", { ascending: false });
+        .from('songs')
+        .select('*')
+        .order('created_at', { ascending: false });
 
       if (songs) {
         // Separate: cloud = songs from other users only
-        const otherSongs = songs.filter((s) => s.uploaded_by !== user?.id);
-
-        setCloudSongs(
-          otherSongs.map((song) => ({
-            song_id_hash: song.song_id_hash,
-            title: song.title,
-            artist: song.artist,
-            album: song.album || "Unknown Album",
-            duration: song.duration,
-            audio_url: song.audio_url,
-            uploaded_by: song.uploaded_by,
-            cover_url: song.cover_url,
-          }))
-        );
+        const otherSongs = songs.filter(s => s.uploaded_by !== user?.id);
+        
+        setCloudSongs(otherSongs.map(song => ({
+          song_id_hash: song.song_id_hash,
+          title: song.title,
+          artist: song.artist,
+          album: song.album || 'Unknown Album',
+          duration: song.duration,
+          audio_url: song.audio_url,
+          uploaded_by: song.uploaded_by,
+          cover_url: song.cover_url,
+        })));
       }
     };
 
@@ -91,11 +81,9 @@ const Home = () => {
   }, [setCloudSongs]);
 
   const handleCloseScanner = async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
     if (user) {
-      localStorage.setItem(`scanned_${user.id}`, "true");
+      localStorage.setItem(`scanned_${user.id}`, 'true');
     }
     setShowScanner(false);
   };
@@ -120,7 +108,7 @@ const Home = () => {
   return (
     <>
       <FileScannerModal open={showScanner} onClose={handleCloseScanner} />
-
+      
       <div className="pb-32 px-4 pt-6 animate-fade-in">
         {/* Header */}
         <header className="mb-8">
@@ -135,12 +123,7 @@ const Home = () => {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">My Music</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/library")}
-                className="gap-1"
-              >
+              <Button variant="ghost" size="sm" onClick={() => navigate('/library')} className="gap-1">
                 View All
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -162,12 +145,7 @@ const Home = () => {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Your Favorites</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/library")}
-                className="gap-1"
-              >
+              <Button variant="ghost" size="sm" onClick={() => navigate('/library')} className="gap-1">
                 View All
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -189,12 +167,7 @@ const Home = () => {
           <section className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Discover</h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/search")}
-                className="gap-1"
-              >
+              <Button variant="ghost" size="sm" onClick={() => navigate('/search')} className="gap-1">
                 Browse All
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -216,10 +189,7 @@ const Home = () => {
         {localSongs.length === 0 && cloudSongs.length === 0 && (
           <div className="text-center py-12">
             <p className="text-muted-foreground mb-4">No music yet</p>
-            <Button
-              onClick={() => setShowScanner(true)}
-              className="bg-gradient-primary"
-            >
+            <Button onClick={() => setShowScanner(true)} className="bg-gradient-primary">
               Scan Your Music
             </Button>
           </div>

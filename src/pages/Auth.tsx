@@ -1,28 +1,22 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/hooks/use-toast";
-import { MusicNote } from "@mui/icons-material";
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { toast } from '@/hooks/use-toast';
+import logo from '@/assets/logo.png';
 
 const Auth = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPassword, setLoginPassword] = useState("");
-  const [signupEmail, setSignupEmail] = useState("");
-  const [signupPassword, setSignupPassword] = useState("");
-  const [signupUsername, setSignupUsername] = useState("");
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupUsername, setSignupUsername] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,16 +29,16 @@ const Auth = () => {
 
     if (error) {
       toast({
-        title: "Login Failed",
+        title: 'Login Failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } else if (data.user) {
       toast({
-        title: "Welcome back!",
-        description: "Successfully logged in",
+        title: 'Welcome back!',
+        description: 'Successfully logged in',
       });
-      navigate("/");
+      navigate('/');
     }
 
     setLoading(false);
@@ -69,14 +63,14 @@ const Auth = () => {
 
     if (error) {
       toast({
-        title: "Signup Failed",
+        title: 'Signup Failed',
         description: error.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } else if (data.user) {
       toast({
-        title: "Account Created!",
-        description: "You can now log in to your account",
+        title: 'Account Created!',
+        description: 'You can now log in to your account',
       });
       // Switch to login tab
     }
@@ -89,21 +83,17 @@ const Auth = () => {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-primary mb-4 animate-pulse-glow">
-            <MusicNote className="w-10 h-10 text-white" />
+          <div className="inline-flex items-center justify-center w-20 h-20 mb-4 animate-pulse-glow">
+            <img src={logo} alt="Youth Tunes" className="w-20 h-20 rounded-full" />
           </div>
           <h1 className="text-4xl font-bold gradient-text mb-2">Youth Tunes</h1>
-          <p className="text-muted-foreground">
-            Your personal music streaming experience
-          </p>
+          <p className="text-muted-foreground">Your personal music streaming experience</p>
         </div>
 
         <Card className="glass border-border/50">
           <CardHeader>
             <CardTitle className="text-2xl text-center">Welcome</CardTitle>
-            <CardDescription className="text-center">
-              Login or create an account to continue
-            </CardDescription>
+            <CardDescription className="text-center">Login or create an account to continue</CardDescription>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="login" className="w-full">
@@ -138,12 +128,8 @@ const Auth = () => {
                       disabled={loading}
                     />
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-primary"
-                    disabled={loading}
-                  >
-                    {loading ? "Logging in..." : "Login"}
+                  <Button type="submit" className="w-full bg-gradient-primary" disabled={loading}>
+                    {loading ? 'Logging in...' : 'Login'}
                   </Button>
                 </form>
               </TabsContent>
@@ -187,12 +173,8 @@ const Auth = () => {
                       minLength={6}
                     />
                   </div>
-                  <Button
-                    type="submit"
-                    className="w-full bg-gradient-primary"
-                    disabled={loading}
-                  >
-                    {loading ? "Creating account..." : "Sign Up"}
+                  <Button type="submit" className="w-full bg-gradient-primary" disabled={loading}>
+                    {loading ? 'Creating account...' : 'Sign Up'}
                   </Button>
                 </form>
               </TabsContent>

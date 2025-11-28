@@ -1,12 +1,13 @@
-import { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import logo from '@/assets/logo.png';
 
 const Splash = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigate("/auth");
+      navigate('/auth');
     }, 3000);
 
     return () => clearTimeout(timer);
@@ -22,12 +23,8 @@ const Splash = () => {
 
       {/* Logo and text */}
       <div className="relative z-10 text-center animate-fade-in">
-        <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-gradient-primary mb-8 animate-pulse-glow">
-          <img
-            src="/logo.png"
-            alt="Youth Tunes Logo"
-            className="w-16 h-16 animate-bounce"
-          />
+        <div className="inline-flex items-center justify-center w-32 h-32 mb-8 animate-pulse-glow">
+          <img src={logo} alt="Youth Tunes" className="w-32 h-32 rounded-full" />
         </div>
         <h1 className="text-6xl font-bold gradient-text mb-4 animate-slide-up">
           Youth Tunes

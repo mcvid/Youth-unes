@@ -30,9 +30,9 @@ const InitialRedirect = () => {
       // Only redirect if we're at root
       if (location.pathname === '/') {
         if (!session) {
-          const isFirstVisit = !localStorage.getItem('mcvix_visited');
+          const isFirstVisit = !localStorage.getItem('youth_tunes_visited');
           if (isFirstVisit) {
-            localStorage.setItem('mcvix_visited', 'true');
+            localStorage.setItem('youth_tunes_visited', 'true');
             navigate('/splash');
           } else {
             navigate('/auth');
