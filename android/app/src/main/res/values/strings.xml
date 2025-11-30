@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Youth Tunes</string>
+    <string name="title_activity_main">Youth Tunes</string>
+    <string name="package_name">com.youthtunes.app</string>
+    <string name="custom_url_scheme">com.youthtunes.app</string>
+</resources>

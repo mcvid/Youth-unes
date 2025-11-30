@@ -1,19 +1,20 @@
-import { useEffect, useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
-import { toast } from '@/hooks/use-toast';
-import { User } from '@supabase/supabase-js';
-import { 
-  Person, 
-  CloudSync, 
-  Storage, 
+import { useEffect, useState, useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { toast } from "@/hooks/use-toast";
+import { User } from "@supabase/supabase-js";
+import {
+  Person,
+  CloudSync,
+  Storage,
   Info,
   Brightness4,
   Logout,
-  CameraAlt
-} from '@mui/icons-material';
+  CameraAlt,
+  PersonAdd,
+} from "@mui/icons-material";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -26,15 +27,15 @@ const Profile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
-        if (session?.user) {
-          fetchProfile(session.user.id);
-        }
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+      if (session?.user) {
+        fetchProfile(session.user.id);
       }
-    );
+    });
 
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
@@ -49,11 +50,11 @@ const Profile = () => {
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
-      .from('profiles')
-      .select('avatar_url')
-      .eq('id', userId)
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", userId)
       .single();
-    
+
     if (data?.avatar_url) {
       setAvatarUrl(data.avatar_url);
     }
@@ -68,11 +69,11 @@ const Profile = () => {
     if (!file || !user) return;
 
     // Validate file type
-    if (!file.type.startsWith('image/')) {
+    if (!file.type.startsWith("image/")) {
       toast({
-        title: 'Invalid file',
-        description: 'Please select an image file',
-        variant: 'destructive',
+        title: "Invalid file",
+        description: "Please select an image file",
+        variant: "destructive",
       });
       return;
     }
@@ -80,9 +81,9 @@ const Profile = () => {
     // Validate file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
       toast({
-        title: 'File too large',
-        description: 'Please select an image under 2MB',
-        variant: 'destructive',
+        title: "File too large",
+        description: "Please select an image under 2MB",
+        variant: "destructive",
       });
       return;
     }
@@ -90,46 +91,51 @@ const Profile = () => {
     setUploading(true);
 
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const filePath = `${user.id}/avatar.${fileExt}`;
 
       // Delete old avatar if exists
       await supabase.storage
-        .from('avatars')
-        .remove([`${user.id}/avatar.png`, `${user.id}/avatar.jpg`, `${user.id}/avatar.jpeg`, `${user.id}/avatar.webp`]);
+        .from("avatars")
+        .remove([
+          `${user.id}/avatar.png`,
+          `${user.id}/avatar.jpg`,
+          `${user.id}/avatar.jpeg`,
+          `${user.id}/avatar.webp`,
+        ]);
 
       // Upload new avatar
       const { error: uploadError } = await supabase.storage
-        .from('avatars')
+        .from("avatars")
         .upload(filePath, file, { upsert: true });
 
       if (uploadError) throw uploadError;
 
       // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('avatars')
-        .getPublicUrl(filePath);
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("avatars").getPublicUrl(filePath);
 
       // Update profile
       const { error: updateError } = await supabase
-        .from('profiles')
+        .from("profiles")
         .update({ avatar_url: publicUrl })
-        .eq('id', user.id);
+        .eq("id", user.id);
 
       if (updateError) throw updateError;
 
-      setAvatarUrl(publicUrl + '?t=' + Date.now()); // Cache bust
+      setAvatarUrl(publicUrl + "?t=" + Date.now()); // Cache bust
 
       toast({
-        title: 'Avatar updated',
-        description: 'Your profile picture has been updated',
+        title: "Avatar updated",
+        description: "Your profile picture has been updated",
       });
     } catch (error: any) {
-      console.error('Avatar upload error:', error);
+      console.error("Avatar upload error:", error);
       toast({
-        title: 'Upload failed',
-        description: error.message || 'Failed to upload avatar',
-        variant: 'destructive',
+        title: "Upload failed",
+        description: error.message || "Failed to upload avatar",
+        variant: "destructive",
       });
     } finally {
       setUploading(false);
@@ -140,16 +146,16 @@ const Profile = () => {
     const { error } = await supabase.auth.signOut();
     if (error) {
       toast({
-        title: 'Logout Failed',
+        title: "Logout Failed",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     } else {
       toast({
-        title: 'Logged out',
-        description: 'See you next time!',
+        title: "Logged out",
+        description: "See you next time!",
       });
-      navigate('/auth');
+      navigate("/auth");
     }
   };
 
@@ -179,9 +185,9 @@ const Profile = () => {
             className="w-24 h-24 rounded-full bg-gradient-primary mx-auto mb-4 flex items-center justify-center overflow-hidden relative group"
           >
             {avatarUrl ? (
-              <img 
-                src={avatarUrl} 
-                alt="Avatar" 
+              <img
+                src={avatarUrl}
+                alt="Avatar"
                 className="w-full h-full object-cover"
               />
             ) : (
@@ -198,7 +204,9 @@ const Profile = () => {
           </button>
           <p className="text-xs text-muted-foreground">Tap to change</p>
         </div>
-        <h1 className="text-2xl font-bold mb-1">{user?.user_metadata?.username || 'Music Lover'}</h1>
+        <h1 className="text-2xl font-bold mb-1">
+          {user?.user_metadata?.username || "Music Lover"}
+        </h1>
         <p className="text-muted-foreground">{user?.email}</p>
       </div>
 
@@ -264,6 +272,14 @@ const Profile = () => {
               <CloudSync className="h-5 w-5" />
               Rescan Local Files
             </Button>
+            <Button
+              variant="outline"
+              className="w-full justify-start gap-2"
+              onClick={() => navigate("/chat")}
+            >
+              <PersonAdd className="h-5 w-5" />
+              Add a Friend
+            </Button>
             <Button variant="outline" className="w-full justify-start gap-2">
               <Brightness4 className="h-5 w-5" />
               Theme: Dark Mode
@@ -276,8 +292,8 @@ const Profile = () => {
         </section>
 
         {/* Logout */}
-        <Button 
-          variant="destructive" 
+        <Button
+          variant="destructive"
           className="w-full gap-2"
           onClick={handleLogout}
         >
