@@ -4,6 +4,7 @@ import { usePlayerStore, Song } from '@/store/playerStore';
 import { useUserLibrary } from '@/hooks/useUserLibrary';
 import { supabase } from '@/integrations/supabase/client';
 import SongCard from '@/components/music/SongCard';
+import SongDetailsModal from '@/components/music/SongDetailsModal';
 import FileScannerModal from '@/components/music/FileScannerModal';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
@@ -15,6 +16,8 @@ const Home = () => {
   const { refreshLibrary } = useUserLibrary();
   const [showScanner, setShowScanner] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [selectedSong, setSelectedSong] = useState<Song | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -94,6 +97,11 @@ const Home = () => {
     setQueue(allSongs);
   };
 
+  const handleViewDetails = (song: Song) => {
+    setSelectedSong(song);
+    setShowDetails(true);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -108,6 +116,12 @@ const Home = () => {
   return (
     <>
       <FileScannerModal open={showScanner} onClose={handleCloseScanner} />
+      <SongDetailsModal 
+        song={selectedSong} 
+        open={showDetails} 
+        onOpenChange={setShowDetails}
+        onPlay={handlePlaySong}
+      />
       
       <div className="pb-32 px-4 pt-6 animate-fade-in">
         {/* Header */}
@@ -134,6 +148,7 @@ const Home = () => {
                   key={song.song_id_hash}
                   song={song}
                   onPlay={handlePlaySong}
+                  onViewDetails={handleViewDetails}
                 />
               ))}
             </div>
@@ -156,6 +171,7 @@ const Home = () => {
                   key={song.song_id_hash}
                   song={song}
                   onPlay={handlePlaySong}
+                  onViewDetails={handleViewDetails}
                 />
               ))}
             </div>
@@ -178,6 +194,7 @@ const Home = () => {
                   key={song.song_id_hash}
                   song={song}
                   onPlay={handlePlaySong}
+                  onViewDetails={handleViewDetails}
                   showAddToLibrary={true}
                 />
               ))}

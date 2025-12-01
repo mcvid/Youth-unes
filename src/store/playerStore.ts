@@ -57,17 +57,30 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   setQueue: (songs) => set({ queue: songs }),
   
   nextSong: () => {
-    const { queue, currentSong, repeat } = get();
+    const { queue, currentSong, repeat, shuffle } = get();
     if (!currentSong || queue.length === 0) return;
     
     const currentIndex = queue.findIndex(s => s.song_id_hash === currentSong.song_id_hash);
-    let nextIndex = currentIndex + 1;
+    let nextIndex: number;
     
-    if (nextIndex >= queue.length) {
-      nextIndex = repeat === 'all' ? 0 : currentIndex;
+    if (shuffle) {
+      // Pick random song that's not current
+      const otherIndices = queue.map((_, i) => i).filter(i => i !== currentIndex);
+      if (otherIndices.length === 0) {
+        nextIndex = currentIndex;
+      } else {
+        nextIndex = otherIndices[Math.floor(Math.random() * otherIndices.length)];
+      }
+    } else {
+      nextIndex = currentIndex + 1;
+      if (nextIndex >= queue.length) {
+        nextIndex = repeat === 'all' ? 0 : currentIndex;
+      }
     }
     
-    set({ currentSong: queue[nextIndex], currentTime: 0 });
+    if (nextIndex !== currentIndex || repeat !== 'off') {
+      set({ currentSong: queue[nextIndex], currentTime: 0, isPlaying: true });
+    }
   },
   
   previousSong: () => {
@@ -83,7 +96,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const currentIndex = queue.findIndex(s => s.song_id_hash === currentSong.song_id_hash);
     const prevIndex = currentIndex > 0 ? currentIndex - 1 : queue.length - 1;
     
-    set({ currentSong: queue[prevIndex], currentTime: 0 });
+    set({ currentSong: queue[prevIndex], currentTime: 0, isPlaying: true });
   },
   
   setCurrentTime: (time) => set({ currentTime: time }),

@@ -1,5 +1,5 @@
 import { Song } from '@/store/playerStore';
-import { Play, Heart } from 'lucide-react';
+import { Play, Heart, Info } from 'lucide-react';
 import { useUserLibrary } from '@/hooks/useUserLibrary';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -7,11 +7,12 @@ import { cn } from '@/lib/utils';
 interface SongCardProps {
   song: Song;
   onPlay: (song: Song) => void;
+  onViewDetails?: (song: Song) => void;
   showAddToLibrary?: boolean;
   className?: string;
 }
 
-const SongCard = ({ song, onPlay, showAddToLibrary = false, className }: SongCardProps) => {
+const SongCard = ({ song, onPlay, onViewDetails, showAddToLibrary = false, className }: SongCardProps) => {
   const { addSongToLibrary, removeSongFromLibrary, isInMyLibrary } = useUserLibrary();
   const inLibrary = isInMyLibrary(song.song_id_hash);
 
@@ -23,6 +24,12 @@ const SongCard = ({ song, onPlay, showAddToLibrary = false, className }: SongCar
       await addSongToLibrary(song);
     }
   };
+
+  const handleViewDetails = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onViewDetails?.(song);
+  };
+
   return (
     <div 
       className={cn(
@@ -30,7 +37,7 @@ const SongCard = ({ song, onPlay, showAddToLibrary = false, className }: SongCar
         "border border-border/50 hover:border-primary/20",
         className
       )}
-      onClick={() => onPlay(song)}
+      onClick={() => onViewDetails ? onViewDetails(song) : onPlay(song)}
     >
       {/* Album Art */}
       <div className="relative mb-2.5 aspect-square rounded overflow-hidden bg-muted">
@@ -48,9 +55,14 @@ const SongCard = ({ song, onPlay, showAddToLibrary = false, className }: SongCar
         
         {/* Hover Overlay */}
         <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-          <div className="h-12 w-12 rounded-full bg-primary flex items-center justify-center hover:scale-110 transition-transform">
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={(e) => { e.stopPropagation(); onPlay(song); }}
+            className="h-12 w-12 rounded-full bg-primary text-primary-foreground hover:scale-110 transition-transform hover:bg-primary"
+          >
             <Play className="h-5 w-5 fill-current" />
-          </div>
+          </Button>
           {showAddToLibrary && (
             <Button
               size="icon"
@@ -62,6 +74,16 @@ const SongCard = ({ song, onPlay, showAddToLibrary = false, className }: SongCar
               )}
             >
               <Heart className={cn("h-4 w-4", inLibrary && "fill-current")} />
+            </Button>
+          )}
+          {onViewDetails && (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={handleViewDetails}
+              className="h-10 w-10 rounded-full hover:scale-110 transition-transform text-white bg-white/20"
+            >
+              <Info className="h-4 w-4" />
             </Button>
           )}
         </div>

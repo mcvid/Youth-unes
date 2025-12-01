@@ -69,8 +69,12 @@ const AudioPlayer = () => {
     if (!audioRef.current || !currentSong) return;
 
     const audio = audioRef.current;
-    audio.src = currentSong.audio_url;
-    audio.load();
+    
+    // Only change source if song actually changed
+    if (audio.src !== currentSong.audio_url) {
+      audio.src = currentSong.audio_url;
+      audio.load();
+    }
 
     if (isPlaying) {
       audio.play().catch(error => {
@@ -78,7 +82,7 @@ const AudioPlayer = () => {
         pause();
       });
     }
-  }, [currentSong, isPlaying, pause]);
+  }, [currentSong?.song_id_hash, isPlaying, pause]);
 
   // Handle play/pause
   useEffect(() => {

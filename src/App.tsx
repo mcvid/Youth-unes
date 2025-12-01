@@ -12,6 +12,7 @@ import Home from "./pages/Home";
 import SearchPage from "./pages/SearchPage";
 import Library from "./pages/Library";
 import Profile from "./pages/Profile";
+import Chat from "./pages/Chat";
 import NowPlaying from "./pages/NowPlaying";
 import NotFound from "./pages/NotFound";
 import AudioPlayer from "./components/player/AudioPlayer";
@@ -65,6 +66,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
           </Route>
           <Route path="/player" element={<ProtectedRoute><NowPlaying /></ProtectedRoute>} />
+          <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
