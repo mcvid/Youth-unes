@@ -14,8 +14,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Roboto', 'system-ui', '-apple-system', 'sans-serif'],
-        heading: ['Poppins', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['DM Sans', 'system-ui', '-apple-system', 'sans-serif'],
+        heading: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -63,9 +63,11 @@ export default {
         'gradient-primary': 'var(--gradient-primary)',
         'gradient-secondary': 'var(--gradient-secondary)',
         'gradient-dark': 'var(--gradient-dark)',
+        'gradient-hero': 'var(--gradient-hero)',
       },
       boxShadow: {
         'glow': 'var(--shadow-glow)',
+        'glow-blue': 'var(--shadow-glow-blue)',
         'card': 'var(--shadow-card)',
         'player': 'var(--shadow-player)',
       },
@@ -76,20 +78,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
         fadeIn: {
           from: { opacity: "0" },
@@ -100,8 +94,12 @@ export default {
           to: { transform: "translateY(0)", opacity: "1" },
         },
         pulseGlow: {
-          "0%, 100%": { boxShadow: "0 0 20px hsla(6, 78%, 70%, 0.3)" },
-          "50%": { boxShadow: "0 0 40px hsla(6, 78%, 70%, 0.6)" },
+          "0%, 100%": { boxShadow: "0 0 20px hsla(0, 100%, 67%, 0.3)" },
+          "50%": { boxShadow: "0 0 40px hsla(0, 100%, 67%, 0.6)" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
         },
       },
       animation: {
@@ -110,6 +108,7 @@ export default {
         "fade-in": "fadeIn 0.5s ease-in",
         "slide-up": "slideUp 0.3s ease-out",
         "pulse-glow": "pulseGlow 2s ease-in-out infinite",
+        "shimmer": "shimmer 2s linear infinite",
       },
     },
   },

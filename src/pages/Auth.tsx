@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from '@/hooks/use-toast';
 import logo from '@/assets/logo.png';
+import AvatarSetup from '@/components/auth/AvatarSetup';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -17,6 +18,9 @@ const Auth = () => {
   const [signupEmail, setSignupEmail] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
   const [signupUsername, setSignupUsername] = useState('');
+  const [showAvatarSetup, setShowAvatarSetup] = useState(false);
+  const [newUserId, setNewUserId] = useState<string | null>(null);
+  const [newUsername, setNewUsername] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,11 +38,24 @@ const Auth = () => {
         variant: 'destructive',
       });
     } else if (data.user) {
-      toast({
-        title: 'Welcome back!',
-        description: 'Successfully logged in',
-      });
-      navigate('/');
+      // Check if user has avatar
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', data.user.id)
+        .single();
+
+      if (!profile?.avatar_url) {
+        setNewUserId(data.user.id);
+        setNewUsername(data.user.user_metadata?.username || 'User');
+        setShowAvatarSetup(true);
+      } else {
+        toast({
+          title: 'Welcome back!',
+          description: 'Successfully logged in',
+        });
+        navigate('/');
+      }
     }
 
     setLoading(false);
@@ -70,13 +87,33 @@ const Auth = () => {
     } else if (data.user) {
       toast({
         title: 'Account Created!',
-        description: 'You can now log in to your account',
+        description: 'Please set up your profile picture',
       });
-      // Switch to login tab
+      setNewUserId(data.user.id);
+      setNewUsername(signupUsername);
+      setShowAvatarSetup(true);
     }
 
     setLoading(false);
   };
+
+  const handleAvatarComplete = () => {
+    toast({
+      title: 'Welcome!',
+      description: 'Your account is all set up',
+    });
+    navigate('/');
+  };
+
+  if (showAvatarSetup && newUserId) {
+    return (
+      <AvatarSetup 
+        userId={newUserId} 
+        username={newUsername}
+        onComplete={handleAvatarComplete}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-dark">

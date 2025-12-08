@@ -45,6 +45,7 @@ const Chat = () => {
   const selectedFriendId = searchParams.get('friend');
   
   const [user, setUser] = useState<User | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
   const [friends, setFriends] = useState<Friend[]>([]);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -61,9 +62,21 @@ const Chat = () => {
       if (user) {
         fetchFriends(user.id);
         fetchUserSuggestions(user.id);
+        fetchUserAvatar(user.id);
       }
     });
   }, []);
+
+  const fetchUserAvatar = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', userId)
+      .single();
+    if (data?.avatar_url) {
+      setUserAvatar(data.avatar_url);
+    }
+  };
 
   const fetchUserSuggestions = async (userId: string) => {
     setLoadingSuggestions(true);
@@ -101,12 +114,10 @@ const Chat = () => {
   const addFriendById = async (friendId: string) => {
     if (!user) return;
 
+    // Only insert one row - trigger handles the reverse friendship
     const { error } = await supabase
       .from('friends')
-      .insert([
-        { user_id: user.id, friend_id: friendId, status: 'accepted' },
-        { user_id: friendId, friend_id: user.id, status: 'accepted' }
-      ]);
+      .insert({ user_id: user.id, friend_id: friendId, status: 'accepted' });
 
     if (error) {
       if (error.code === '23505') {
@@ -290,12 +301,10 @@ const Chat = () => {
       return;
     }
 
+    // Only insert one row - trigger handles the reverse friendship
     const { error } = await supabase
       .from('friends')
-      .insert([
-        { user_id: user.id, friend_id: friendData.id, status: 'accepted' },
-        { user_id: friendData.id, friend_id: user.id, status: 'accepted' }
-      ]);
+      .insert({ user_id: user.id, friend_id: friendData.id, status: 'accepted' });
 
     if (error) {
       if (error.code === '23505') {
@@ -532,13 +541,25 @@ const Chat = () => {
               )}
               {messages.map((message) => {
                 const isOwn = message.sender_id === user?.id;
+                const avatar = isOwn ? userAvatar : selectedFriend.friend_avatar;
+                const initial = isOwn 
+                  ? user?.user_metadata?.username?.[0]?.toUpperCase() 
+                  : selectedFriend.friend_username?.charAt(0).toUpperCase();
+                
                 return (
                   <div
                     key={message.id}
-                    className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
+                    className={`flex gap-2 ${isOwn ? 'flex-row-reverse' : 'flex-row'}`}
                   >
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground text-sm font-bold overflow-hidden flex-shrink-0">
+                      {avatar ? (
+                        <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        initial || '?'
+                      )}
+                    </div>
                     <div
-                      className={`max-w-[75%] rounded-2xl px-4 py-2 ${
+                      className={`max-w-[70%] rounded-2xl px-4 py-2 ${
                         isOwn
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-muted'

@@ -1,0 +1,9 @@
+{
+  "appId": "app.lovable.f560a0feb3cd4c23b4e8c37cfd2f797f",
+  "appName": "Youth Tunes",
+  "webDir": "dist",
+  "server": {
+    "url": "https://f560a0fe-b3cd-4c23-b4e8-c37cfd2f797f.lovableproject.com?forceHideBadge=true",
+    "cleartext": true
+  }
+}

@@ -81,8 +81,16 @@ const SongComments = ({ songId, currentTime }: SongCommentsProps) => {
             <div key={comment.id} className="bg-secondary/30 rounded-lg p-3 space-y-1">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center text-xs">
-                    {comment.profile?.username?.[0]?.toUpperCase() || '?'}
+                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-xs overflow-hidden flex-shrink-0">
+                    {comment.profile?.avatar_url ? (
+                      <img 
+                        src={comment.profile.avatar_url} 
+                        alt={comment.profile?.username || 'User'} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      comment.profile?.username?.[0]?.toUpperCase() || '?'
+                    )}
                   </div>
                   <span className="text-sm font-medium">
                     {comment.profile?.username || 'Anonymous'}
@@ -97,7 +105,7 @@ const SongComments = ({ songId, currentTime }: SongCommentsProps) => {
                   {formatDistanceToNow(new Date(comment.created_at), { addSuffix: true })}
                 </span>
               </div>
-              <p className="text-sm text-foreground/90">{comment.content}</p>
+              <p className="text-sm text-foreground/90 ml-10">{comment.content}</p>
             </div>
           ))
         )}

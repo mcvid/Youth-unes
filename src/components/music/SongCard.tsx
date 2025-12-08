@@ -33,35 +33,37 @@ const SongCard = ({ song, onPlay, onViewDetails, showAddToLibrary = false, class
   return (
     <div 
       className={cn(
-        "group relative bg-secondary/40 rounded-md p-3 hover:bg-secondary/60 transition-all cursor-pointer",
-        "border border-border/50 hover:border-primary/20",
+        "group relative bg-card/50 backdrop-blur-sm rounded-xl p-4",
+        "border border-border/30 hover:border-primary/30",
+        "transition-all duration-300 ease-out cursor-pointer",
+        "hover:shadow-2xl hover:shadow-primary/10 hover:-translate-y-1",
         className
       )}
       onClick={() => onViewDetails ? onViewDetails(song) : onPlay(song)}
     >
       {/* Album Art */}
-      <div className="relative mb-2.5 aspect-square rounded overflow-hidden bg-muted">
+      <div className="relative mb-3 aspect-square rounded-lg overflow-hidden shadow-lg">
         {song.cover_url ? (
           <img 
             src={song.cover_url} 
             alt={song.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-muted to-muted/50">
-            <span className="text-4xl opacity-30">🎵</span>
+          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-secondary to-muted">
+            <span className="text-5xl opacity-40">🎵</span>
           </div>
         )}
         
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+        <div className="absolute inset-0 bg-background/80 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center gap-3">
           <Button
             size="icon"
             variant="ghost"
             onClick={(e) => { e.stopPropagation(); onPlay(song); }}
-            className="h-12 w-12 rounded-full bg-primary text-primary-foreground hover:scale-110 transition-transform hover:bg-primary"
+            className="h-14 w-14 rounded-full bg-primary text-primary-foreground hover:bg-primary hover:scale-110 transition-all duration-200 shadow-2xl shadow-primary/40"
           >
-            <Play className="h-5 w-5 fill-current" />
+            <Play className="h-6 w-6 fill-current ml-0.5" />
           </Button>
           {showAddToLibrary && (
             <Button
@@ -69,11 +71,13 @@ const SongCard = ({ song, onPlay, onViewDetails, showAddToLibrary = false, class
               variant="ghost"
               onClick={handleLibraryToggle}
               className={cn(
-                "h-10 w-10 rounded-full hover:scale-110 transition-transform",
-                inLibrary ? 'text-primary bg-primary/20' : 'text-white bg-white/20'
+                "h-11 w-11 rounded-full hover:scale-110 transition-all duration-200",
+                inLibrary 
+                  ? 'text-primary bg-primary/20 shadow-lg shadow-primary/20' 
+                  : 'text-foreground/80 bg-foreground/10 hover:bg-foreground/20'
               )}
             >
-              <Heart className={cn("h-4 w-4", inLibrary && "fill-current")} />
+              <Heart className={cn("h-5 w-5", inLibrary && "fill-current")} />
             </Button>
           )}
           {onViewDetails && (
@@ -81,19 +85,28 @@ const SongCard = ({ song, onPlay, onViewDetails, showAddToLibrary = false, class
               size="icon"
               variant="ghost"
               onClick={handleViewDetails}
-              className="h-10 w-10 rounded-full hover:scale-110 transition-transform text-white bg-white/20"
+              className="h-11 w-11 rounded-full hover:scale-110 transition-all duration-200 text-foreground/80 bg-foreground/10 hover:bg-accent hover:text-accent-foreground"
             >
-              <Info className="h-4 w-4" />
+              <Info className="h-5 w-5" />
             </Button>
           )}
         </div>
       </div>
 
       {/* Song Info */}
-      <div className="space-y-0.5">
-        <h3 className="font-medium text-sm truncate text-foreground">{song.title}</h3>
-        <p className="text-xs text-muted-foreground truncate">{song.artist}</p>
+      <div className="space-y-1">
+        <h3 className="font-bold text-base truncate text-foreground tracking-tight">
+          {song.title}
+        </h3>
+        <p className="text-sm text-muted-foreground/80 truncate font-medium">
+          {song.artist}
+        </p>
       </div>
+
+      {/* Subtle glow effect when in library */}
+      {inLibrary && (
+        <div className="absolute -inset-px rounded-xl bg-gradient-to-r from-primary/20 via-transparent to-accent/20 opacity-50 pointer-events-none" />
+      )}
     </div>
   );
 };

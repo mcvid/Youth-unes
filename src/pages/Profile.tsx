@@ -13,9 +13,9 @@ import {
   Brightness4,
   Logout,
   CameraAlt,
-  Chat,
-  Notifications
+  Chat
 } from '@mui/icons-material';
+import NotificationBell from '@/components/notifications/NotificationBell';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -165,6 +165,11 @@ const Profile = () => {
 
   return (
     <div className="pb-32 px-4 pt-6 animate-fade-in max-w-2xl mx-auto">
+      {/* Header with Notification Bell */}
+      <div className="flex justify-end mb-4">
+        <NotificationBell />
+      </div>
+      
       {/* Profile Header */}
       <div className="mb-8 text-center">
         <div className="relative inline-block">
@@ -218,7 +223,6 @@ const Profile = () => {
               <p className="text-sm text-muted-foreground">Chat with your friends</p>
             </div>
           </div>
-          <Notifications className="h-5 w-5 text-muted-foreground" />
         </Button>
       </section>
 

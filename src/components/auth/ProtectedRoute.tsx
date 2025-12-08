@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { User } from '@supabase/supabase-js';
+import AvatarSetup from './AvatarSetup';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -10,20 +11,39 @@ interface ProtectedRouteProps {
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [needsAvatar, setNeedsAvatar] = useState(false);
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    const checkUserAndAvatar = async (currentUser: User | null) => {
+      if (!currentUser) {
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+
+      setUser(currentUser);
+
+      // Check if user has avatar
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('avatar_url')
+        .eq('id', currentUser.id)
+        .single();
+
+      setNeedsAvatar(!profile?.avatar_url);
+      setLoading(false);
+    };
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
-        setUser(session?.user ?? null);
-        setLoading(false);
+        checkUserAndAvatar(session?.user ?? null);
       }
     );
 
-    // THEN check for existing session
+    // Check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
+      checkUserAndAvatar(session?.user ?? null);
     });
 
     return () => subscription.unsubscribe();
@@ -42,6 +62,16 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  if (needsAvatar) {
+    return (
+      <AvatarSetup 
+        userId={user.id}
+        username={user.user_metadata?.username || 'User'}
+        onComplete={() => setNeedsAvatar(false)}
+      />
+    );
   }
 
   return <>{children}</>;
