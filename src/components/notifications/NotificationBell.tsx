@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
-import { Notifications, Close } from '@mui/icons-material';
+import { Notifications, Close, NotificationsActive } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import { useNotifications } from '@/hooks/useNotifications';
 
 interface Notification {
   id: string;
@@ -20,6 +21,18 @@ const NotificationBell = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const { 
+    permission, 
+    isSupported, 
+    requestPermission, 
+    registerServiceWorker,
+    showNotification 
+  } = useNotifications();
+
+  // Register service worker on mount
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data: { user } }) => {
@@ -47,13 +60,18 @@ const NotificationBell = () => {
           const newNotif = payload.new as Notification;
           setNotifications(prev => [newNotif, ...prev]);
           
-          // Show browser notification if supported
-          if ('Notification' in window && Notification.permission === 'granted') {
-            new Notification(newNotif.title, {
-              body: newNotif.message,
-              icon: '/favicon.png'
-            });
-          }
+          // Show native notification
+          const url = newNotif.type === 'new_message' 
+            ? `/chat?friend=${newNotif.data.sender_id}`
+            : newNotif.type === 'friend_accepted'
+            ? `/chat?friend=${newNotif.data.friend_id}`
+            : '/';
+
+          showNotification(newNotif.title, {
+            body: newNotif.message,
+            url,
+            tag: newNotif.type
+          });
         }
       )
       .subscribe();
@@ -61,14 +79,7 @@ const NotificationBell = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [userId]);
-
-  useEffect(() => {
-    // Request notification permission
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }, []);
+  }, [userId, showNotification]);
 
   const fetchNotifications = async (uid: string) => {
     const { data, error } = await supabase
@@ -118,6 +129,10 @@ const NotificationBell = () => {
     setShowDropdown(false);
   };
 
+  const handleEnableNotifications = async () => {
+    await requestPermission();
+  };
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const formatTime = (dateString: string) => {
@@ -156,7 +171,7 @@ const NotificationBell = () => {
             className="fixed inset-0 z-40" 
             onClick={() => setShowDropdown(false)}
           />
-          <div className="absolute right-0 top-12 w-80 max-h-96 bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden animate-in slide-in-from-top-2">
+          <div className="absolute right-0 top-12 w-80 max-h-[28rem] bg-card border border-border rounded-lg shadow-lg z-50 overflow-hidden animate-in slide-in-from-top-2">
             <div className="p-3 border-b border-border flex items-center justify-between">
               <h3 className="font-semibold">Notifications</h3>
               <div className="flex items-center gap-2">
@@ -180,6 +195,22 @@ const NotificationBell = () => {
                 </Button>
               </div>
             </div>
+
+            {/* Enable notifications banner */}
+            {isSupported && permission !== 'granted' && (
+              <div className="p-3 bg-primary/10 border-b border-border">
+                <div className="flex items-center gap-2">
+                  <NotificationsActive className="h-5 w-5 text-primary" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">Enable notifications</p>
+                    <p className="text-xs text-muted-foreground">Get alerts for new messages</p>
+                  </div>
+                  <Button size="sm" onClick={handleEnableNotifications}>
+                    Enable
+                  </Button>
+                </div>
+              </div>
+            )}
             
             <div className="overflow-y-auto max-h-80">
               {notifications.length === 0 ? (

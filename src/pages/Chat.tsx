@@ -52,8 +52,11 @@ const Chat = () => {
   const [showAddFriend, setShowAddFriend] = useState(false);
   const [friendUsername, setFriendUsername] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const [userSearchQuery, setUserSearchQuery] = useState('');
   const [userSuggestions, setUserSuggestions] = useState<UserSuggestion[]>([]);
+  const [searchedUsers, setSearchedUsers] = useState<UserSuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [searchingUsers, setSearchingUsers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -90,13 +93,18 @@ const Chat = () => {
       const friendIds = friendsData?.map(f => f.friend_id) || [];
       const excludeIds = [userId, ...friendIds];
 
-      // Get users who are not friends
-      const { data: users, error } = await supabase
+      // Build the NOT IN filter properly
+      let query = supabase
         .from('profiles')
         .select('id, username, avatar_url')
-        .not('id', 'in', `(${excludeIds.join(',')})`)
-        .not('username', 'is', null)
-        .limit(10);
+        .not('username', 'is', null);
+
+      // Only apply the exclusion if there are IDs to exclude
+      if (excludeIds.length > 0) {
+        query = query.not('id', 'in', `(${excludeIds.join(',')})`);
+      }
+
+      const { data: users, error } = await query.limit(15);
 
       if (error) {
         console.error('Error fetching suggestions:', error);
@@ -110,6 +118,61 @@ const Chat = () => {
       setLoadingSuggestions(false);
     }
   };
+
+  // Search all users when typing in the search box
+  const searchAllUsers = async (query: string) => {
+    if (!user || !query.trim()) {
+      setSearchedUsers([]);
+      return;
+    }
+
+    setSearchingUsers(true);
+    try {
+      // Get current friend IDs
+      const { data: friendsData } = await supabase
+        .from('friends')
+        .select('friend_id')
+        .eq('user_id', user.id);
+      
+      const friendIds = friendsData?.map(f => f.friend_id) || [];
+      const excludeIds = [user.id, ...friendIds];
+
+      // Search all users by username (case-insensitive)
+      let searchQueryBuilder = supabase
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .ilike('username', `%${query.trim()}%`);
+
+      if (excludeIds.length > 0) {
+        searchQueryBuilder = searchQueryBuilder.not('id', 'in', `(${excludeIds.join(',')})`);
+      }
+
+      const { data: users, error } = await searchQueryBuilder.limit(50);
+
+      if (error) {
+        console.error('Error searching users:', error);
+        return;
+      }
+
+      setSearchedUsers(users || []);
+    } catch (error) {
+      console.error('Error searching users:', error);
+    } finally {
+      setSearchingUsers(false);
+    }
+  };
+
+  // Debounced user search
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      if (userSearchQuery.trim()) {
+        searchAllUsers(userSearchQuery);
+      } else {
+        setSearchedUsers([]);
+      }
+    }, 300);
+    return () => clearTimeout(debounce);
+  }, [userSearchQuery, user]);
 
   const addFriendById = async (friendId: string) => {
     if (!user) return;
@@ -385,17 +448,75 @@ const Chat = () => {
 
       {/* Add Friend Section */}
       {showAddFriend && !selectedFriendId && (
-        <div className="bg-card/80 backdrop-blur-lg p-4 border-b border-border animate-in slide-in-from-top">
-          <div className="flex gap-2">
+        <div className="bg-card/80 backdrop-blur-lg p-4 border-b border-border animate-in slide-in-from-top space-y-4">
+          {/* Search for users */}
+          <div className="space-y-2">
+            <label className="text-sm text-muted-foreground">Search all users</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by username..."
+                value={userSearchQuery}
+                onChange={(e) => setUserSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+          </div>
+
+          {/* Search Results */}
+          {userSearchQuery.trim() && (
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {searchingUsers ? (
+                <p className="text-sm text-muted-foreground text-center py-4">Searching...</p>
+              ) : searchedUsers.length > 0 ? (
+                searchedUsers.map((foundUser) => (
+                  <div
+                    key={foundUser.id}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-card/50 border border-border"
+                  >
+                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold overflow-hidden flex-shrink-0">
+                      {foundUser.avatar_url ? (
+                        <img src={foundUser.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        foundUser.username?.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium">{foundUser.username}</p>
+                    </div>
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        addFriendById(foundUser.id);
+                        setUserSearchQuery('');
+                        setSearchedUsers([]);
+                      }}
+                      className="gap-1"
+                    >
+                      <PersonAddAlt1 className="h-4 w-4" />
+                      Add
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">
+                  No users found for "{userSearchQuery}"
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Or add by exact username */}
+          <div className="flex gap-2 pt-2 border-t border-border">
             <Input
-              placeholder="Enter friend's username..."
+              placeholder="Or enter exact username..."
               value={friendUsername}
               onChange={(e) => setFriendUsername(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && addFriend()}
               className="flex-1"
             />
             <Button onClick={addFriend}>
-              Add Friend
+              Add
             </Button>
           </div>
         </div>

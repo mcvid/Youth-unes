@@ -5,16 +5,14 @@ import { useUserLibrary } from '@/hooks/useUserLibrary';
 import { supabase } from '@/integrations/supabase/client';
 import SongCard from '@/components/music/SongCard';
 import SongDetailsModal from '@/components/music/SongDetailsModal';
-import FileScannerModal from '@/components/music/FileScannerModal';
 import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const Home = () => {
-  const { localSongs, myLibrary, cloudSongs, setCloudSongs } = useLibraryStore();
+  const { myLibrary, cloudSongs, setCloudSongs } = useLibraryStore();
   const { setCurrentSong, setQueue } = usePlayerStore();
   const { refreshLibrary } = useUserLibrary();
-  const [showScanner, setShowScanner] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedSong, setSelectedSong] = useState<Song | null>(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -22,34 +20,6 @@ const Home = () => {
 
   useEffect(() => {
     refreshLibrary();
-  }, []);
-
-  // Check if this is first login and show scanner
-  useEffect(() => {
-    const checkFirstLogin = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      const hasScanned = localStorage.getItem(`scanned_${user.id}`);
-      
-      if (!hasScanned) {
-        // Check if user has any local songs OR uploaded songs
-        const localSongs = useLibraryStore.getState().localSongs;
-        const { data: cloudSongs } = await supabase
-          .from('songs')
-          .select('id')
-          .eq('uploaded_by', user.id)
-          .limit(1);
-
-        if (localSongs.length === 0 && (!cloudSongs || cloudSongs.length === 0)) {
-          setShowScanner(true);
-        }
-      }
-
-      setLoading(false);
-    };
-
-    checkFirstLogin();
   }, []);
 
   // Fetch cloud songs on mount
@@ -78,21 +48,15 @@ const Home = () => {
           cover_url: song.cover_url,
         })));
       }
+      
+      setLoading(false);
     };
 
     fetchCloudSongs();
   }, [setCloudSongs]);
 
-  const handleCloseScanner = async () => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      localStorage.setItem(`scanned_${user.id}`, 'true');
-    }
-    setShowScanner(false);
-  };
-
   const handlePlaySong = (song: Song) => {
-    const allSongs = [...localSongs, ...cloudSongs];
+    const allSongs = [...myLibrary, ...cloudSongs];
     setCurrentSong(song);
     setQueue(allSongs);
   };
@@ -115,7 +79,6 @@ const Home = () => {
 
   return (
     <>
-      <FileScannerModal open={showScanner} onClose={handleCloseScanner} />
       <SongDetailsModal 
         song={selectedSong} 
         open={showDetails} 
@@ -129,31 +92,8 @@ const Home = () => {
           <h1 className="text-4xl font-bold mb-2">
             <span className="gradient-text">Youth Tunes</span>
           </h1>
-          <p className="text-muted-foreground">Discover and enjoy your music</p>
+          <p className="text-muted-foreground">Discover and stream your music</p>
         </header>
-
-        {/* My Music (Local) */}
-        {localSongs.length > 0 && (
-          <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold">My Music</h2>
-              <Button variant="ghost" size="sm" onClick={() => navigate('/library')} className="gap-1">
-                View All
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-              {localSongs.slice(0, 6).map((song) => (
-                <SongCard
-                  key={song.song_id_hash}
-                  song={song}
-                  onPlay={handlePlaySong}
-                  onViewDetails={handleViewDetails}
-                />
-              ))}
-            </div>
-          </section>
-        )}
 
         {/* Favorites */}
         {myLibrary.length > 0 && (
@@ -203,11 +143,11 @@ const Home = () => {
         )}
 
         {/* Empty State */}
-        {localSongs.length === 0 && cloudSongs.length === 0 && (
+        {myLibrary.length === 0 && cloudSongs.length === 0 && (
           <div className="text-center py-12">
-            <p className="text-muted-foreground mb-4">No music yet</p>
-            <Button onClick={() => setShowScanner(true)} className="bg-gradient-primary">
-              Scan Your Music
+            <p className="text-muted-foreground mb-4">No music available yet</p>
+            <Button onClick={() => navigate('/search')} className="bg-gradient-primary">
+              Browse Music
             </Button>
           </div>
         )}

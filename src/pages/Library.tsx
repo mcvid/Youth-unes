@@ -5,10 +5,10 @@ import { useUserLibrary } from '@/hooks/useUserLibrary';
 import SongList from '@/components/music/SongList';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Heart, Smartphone, ListMusic, Plus, Music, Cloud } from 'lucide-react';
+import { Heart, ListMusic, Plus, Music, Cloud } from 'lucide-react';
 
 const Library = () => {
-  const { localSongs, myLibrary, cloudSongs, playlists } = useLibraryStore();
+  const { myLibrary, cloudSongs, playlists } = useLibraryStore();
   const { setCurrentSong, setQueue } = usePlayerStore();
   const { refreshLibrary } = useUserLibrary();
 
@@ -16,11 +16,9 @@ const Library = () => {
     refreshLibrary();
   }, []);
 
-  const handlePlaySong = (song: Song, source: 'local' | 'library' | 'discover') => {
+  const handlePlaySong = (song: Song, source: 'library' | 'discover') => {
     setCurrentSong(song);
-    if (source === 'local') {
-      setQueue(localSongs);
-    } else if (source === 'library') {
+    if (source === 'library') {
       setQueue(myLibrary);
     } else {
       setQueue(cloudSongs);
@@ -38,19 +36,15 @@ const Library = () => {
           <div>
             <h1 className="text-3xl font-bold">Your Library</h1>
             <p className="text-sm text-muted-foreground">
-              {localSongs.length + myLibrary.length} songs
+              {myLibrary.length} songs
             </p>
           </div>
         </div>
       </div>
 
       {/* Library Tabs */}
-      <Tabs defaultValue="music" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 mb-6 h-12">
-          <TabsTrigger value="music" className="gap-2 text-sm">
-            <Smartphone className="h-4 w-4" />
-            My Music
-          </TabsTrigger>
+      <Tabs defaultValue="library" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-6 h-12">
           <TabsTrigger value="library" className="gap-2 text-sm">
             <Heart className="h-4 w-4" />
             Favorites
@@ -64,32 +58,6 @@ const Library = () => {
             Playlists
           </TabsTrigger>
         </TabsList>
-
-        <TabsContent value="music" className="space-y-4">
-          {localSongs.length > 0 ? (
-            <>
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm text-muted-foreground">
-                  {localSongs.length} songs scanned from your device
-                </p>
-              </div>
-              <SongList 
-                songs={localSongs} 
-                onPlay={(song) => handlePlaySong(song, 'local')} 
-              />
-            </>
-          ) : (
-            <div className="text-center py-20 glass rounded-xl">
-              <div className="mb-6">
-                <Smartphone className="mx-auto h-20 w-20 text-muted-foreground/50" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">No Local Music</h3>
-              <p className="text-muted-foreground mb-6 max-w-sm mx-auto">
-                Scan your device to add your personal music collection
-              </p>
-            </div>
-          )}
-        </TabsContent>
 
         <TabsContent value="library" className="space-y-4">
           {myLibrary.length > 0 ? (
@@ -111,7 +79,7 @@ const Library = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">No Favorites Yet</h3>
               <p className="text-muted-foreground max-w-sm mx-auto mb-6">
-                Add songs from the cloud library to your favorites
+                Add songs from the discover section to your favorites
               </p>
               <Button onClick={() => document.querySelector('[value="discover"]')?.dispatchEvent(new Event('click'))}>
                 Discover Music
@@ -125,7 +93,7 @@ const Library = () => {
             <>
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm text-muted-foreground">
-                  {cloudSongs.length} songs available from the community
+                  {cloudSongs.length} songs available to stream
                 </p>
               </div>
               <SongList 
@@ -140,7 +108,7 @@ const Library = () => {
               </div>
               <h3 className="text-xl font-semibold mb-2">Nothing to Discover</h3>
               <p className="text-muted-foreground max-w-sm mx-auto">
-                Be the first to share music with the community!
+                New music coming soon!
               </p>
             </div>
           )}

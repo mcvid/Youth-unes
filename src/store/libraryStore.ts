@@ -3,14 +3,12 @@ import { persist } from 'zustand/middleware';
 import { Song } from './playerStore';
 
 interface LibraryState {
-  localSongs: Song[];
   cloudSongs: Song[];
   myLibrary: Song[]; // Songs added from cloud to personal library
   playlists: Playlist[];
   recentlyPlayed: Song[];
   
   // Actions
-  setLocalSongs: (songs: Song[]) => void;
   setCloudSongs: (songs: Song[]) => void;
   setMyLibrary: (songs: Song[]) => void;
   addToMyLibrary: (song: Song) => void;
@@ -33,13 +31,10 @@ export interface Playlist {
 export const useLibraryStore = create<LibraryState>()(
   persist(
     (set, get) => ({
-      localSongs: [],
       cloudSongs: [],
       myLibrary: [],
       playlists: [],
       recentlyPlayed: [],
-
-      setLocalSongs: (songs) => set({ localSongs: songs }),
       
       setCloudSongs: (songs) => set({ cloudSongs: songs }),
       
@@ -95,7 +90,6 @@ export const useLibraryStore = create<LibraryState>()(
     {
       name: 'youth-tunes-library-storage',
       partialize: (state) => ({
-        localSongs: state.localSongs,
         playlists: state.playlists,
         recentlyPlayed: state.recentlyPlayed,
       }),
