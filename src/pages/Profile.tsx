@@ -16,6 +16,7 @@ import {
   Chat
 } from '@mui/icons-material';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import SpotifyConnect from '@/components/spotify/SpotifyConnect';
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -224,6 +225,11 @@ const Profile = () => {
             </div>
           </div>
         </Button>
+      </section>
+
+      {/* Spotify Integration */}
+      <section className="mb-6">
+        <SpotifyConnect />
       </section>
 
       {/* Settings Sections */}

@@ -14,6 +14,7 @@ import Library from "./pages/Library";
 import Profile from "./pages/Profile";
 import Chat from "./pages/Chat";
 import NowPlaying from "./pages/NowPlaying";
+import SpotifyCallback from "./pages/SpotifyCallback";
 import NotFound from "./pages/NotFound";
 import AudioPlayer from "./components/player/AudioPlayer";
 import { supabase } from "@/integrations/supabase/client";
@@ -67,6 +68,7 @@ const App = () => (
           </Route>
           <Route path="/player" element={<ProtectedRoute><NowPlaying /></ProtectedRoute>} />
           <Route path="/chat" element={<ProtectedRoute><Chat /></ProtectedRoute>} />
+          <Route path="/spotify/callback" element={<ProtectedRoute><SpotifyCallback /></ProtectedRoute>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
