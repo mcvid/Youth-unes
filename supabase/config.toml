@@ -1,0 +1,7 @@
+project_id = "dfydlafqbfuymttqhydb"
+
+[functions.spotify-auth]
+verify_jwt = false
+
+[functions.spotify-api]
+verify_jwt = false

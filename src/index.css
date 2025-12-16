@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Youth Tunes Design System
+   Color Palette:
+   - Primary Background: Deep Indigo/Navy #0E172C
+   - Text/Surface: Off-White #F0F2F5
+   - Primary Accent: Vibrant Coral #FF5757
+   - Secondary Accent: Electric Blue #00CFFF
+   
+   Typography:
+   - Headlines: Inter (bold, impactful)
+   - Body: DM Sans (clean, readable)
+*/
+
+@layer base {
+  :root {
+    /* Deep Indigo/Navy Background - Trust, stability, depth */
+    --background: 222 50% 11%;
+    --foreground: 220 20% 95%;
+
+    /* Card surfaces - slightly lighter than background */
+    --card: 222 45% 14%;
+    --card-foreground: 220 20% 95%;
+
+    /* Popover - elevated surfaces */
+    --popover: 222 48% 12%;
+    --popover-foreground: 220 20% 95%;
+
+    /* Primary Accent: Vibrant Coral - Energy, passion, excitement */
+    --primary: 0 100% 67%;
+    --primary-foreground: 0 0% 100%;
+
+    /* Secondary: Muted indigo for panels */
+    --secondary: 222 40% 18%;
+    --secondary-foreground: 220 20% 95%;
+
+    /* Muted surfaces */
+    --muted: 222 35% 20%;
+    --muted-foreground: 220 15% 60%;
+
+    /* Accent: Electric Blue - Innovation, clarity */
+    --accent: 190 100% 50%;
+    --accent-foreground: 222 50% 11%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 222 30% 22%;
+    --input: 222 35% 18%;
+    --ring: 0 100% 67%;
+
+    --radius: 0.75rem;
+
+    /* Music player specific colors */
+    --player-bg: 222 48% 10%;
+    --glass-bg: 222 40% 15%;
+    --overlay: 222 50% 8%;
+    
+    /* Vibrant gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(0 100% 67%) 0%, hsl(20 100% 60%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(190 100% 50%) 0%, hsl(210 100% 60%) 100%);
+    --gradient-dark: linear-gradient(180deg, hsl(222 50% 14%) 0%, hsl(222 50% 8%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(222 50% 15%) 0%, hsl(250 40% 12%) 50%, hsl(222 50% 11%) 100%);
+    
+    /* Glow shadows */
+    --shadow-glow: 0 8px 32px hsla(0, 100%, 67%, 0.25);
+    --shadow-glow-blue: 0 8px 32px hsla(190, 100%, 50%, 0.2);
+    --shadow-card: 0 4px 16px hsla(222, 50%, 5%, 0.4);
+    --shadow-player: 0 -4px 24px hsla(222, 50%, 5%, 0.6);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(var(--background));
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground));
+  }
+
+  /* Glass morphism utility */
+  .glass {
+    background: hsla(var(--glass-bg), 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid hsla(var(--border), 0.4);
+  }
+
+  /* Gradient text */
+  .gradient-text {
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-blue {
+    background: var(--gradient-secondary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: var(--shadow-glow);
+  }
+
+  .glow-accent {
+    box-shadow: var(--shadow-glow-blue);
+  }
+
+  /* Safe area padding for mobile */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-area-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
