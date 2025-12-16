@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useSpotify } from '@/hooks/useSpotify';
 
@@ -8,17 +8,21 @@ const SpotifyCallback = () => {
   const error = searchParams.get('error');
   const { handleCallback } = useSpotify();
   const navigate = useNavigate();
+  const processedRef = useRef(false);
 
   useEffect(() => {
+    if (processedRef.current) return;
+    
     if (error) {
       console.error('Spotify auth error:', error);
+      processedRef.current = true;
       navigate('/');
       return;
     }
 
     if (code) {
+      processedRef.current = true;
       handleCallback(code).then((success) => {
-        // Navigate to home regardless of success, toast will show error if any
         navigate('/');
       });
     }
