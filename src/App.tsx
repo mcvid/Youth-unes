@@ -17,6 +17,7 @@ import NowPlaying from "./pages/NowPlaying";
 import SpotifyCallback from "./pages/SpotifyCallback";
 import NotFound from "./pages/NotFound";
 import AudioPlayer from "./components/player/AudioPlayer";
+import SpotifyPlayer from "./components/spotify/SpotifyPlayer";
 import { supabase } from "@/integrations/supabase/client";
 
 const queryClient = new QueryClient();
@@ -55,7 +56,8 @@ const App = () => (
       <Toaster />
       <Sonner />
       <AudioPlayer />
-      <BrowserRouter>
+      <SpotifyPlayer />
+      <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
         <InitialRedirect />
         <Routes>
           <Route path="/splash" element={<Splash />} />

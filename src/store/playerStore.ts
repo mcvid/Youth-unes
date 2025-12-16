@@ -20,6 +20,8 @@ interface PlayerState {
   volume: number;
   shuffle: boolean;
   repeat: 'off' | 'all' | 'one';
+  activeDevice: 'local' | 'spotify';
+  spotifyDeviceId: string | null;
   
   // Actions
   setCurrentSong: (song: Song) => void;
@@ -34,6 +36,8 @@ interface PlayerState {
   setVolume: (volume: number) => void;
   toggleShuffle: () => void;
   toggleRepeat: () => void;
+  setSpotifyDeviceId: (id: string) => void;
+  setActiveDevice: (device: 'local' | 'spotify') => void;
 }
 
 export const usePlayerStore = create<PlayerState>((set, get) => ({
@@ -45,8 +49,17 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   volume: 1,
   shuffle: false,
   repeat: 'off',
+  activeDevice: 'local',
+  spotifyDeviceId: null,
 
-  setCurrentSong: (song) => set({ currentSong: song, isPlaying: true }),
+  setCurrentSong: (song) => {
+      const isSpotify = song.uploaded_by === 'Spotify';
+      set({ 
+          currentSong: song, 
+          isPlaying: true, 
+          activeDevice: isSpotify ? 'spotify' : 'local' 
+      });
+  },
   
   play: () => set({ isPlaying: true }),
   
@@ -79,7 +92,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     }
     
     if (nextIndex !== currentIndex || repeat !== 'off') {
-      set({ currentSong: queue[nextIndex], currentTime: 0, isPlaying: true });
+        const nextSong = queue[nextIndex];
+        const isSpotify = nextSong.uploaded_by === 'Spotify';
+        set({ 
+            currentSong: nextSong, 
+            currentTime: 0, 
+            isPlaying: true,
+            activeDevice: isSpotify ? 'spotify' : 'local'
+        });
     }
   },
   
@@ -96,7 +116,14 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
     const currentIndex = queue.findIndex(s => s.song_id_hash === currentSong.song_id_hash);
     const prevIndex = currentIndex > 0 ? currentIndex - 1 : queue.length - 1;
     
-    set({ currentSong: queue[prevIndex], currentTime: 0, isPlaying: true });
+    const prevSong = queue[prevIndex];
+    const isSpotify = prevSong.uploaded_by === 'Spotify';
+    set({ 
+        currentSong: prevSong, 
+        currentTime: 0, 
+        isPlaying: true,
+        activeDevice: isSpotify ? 'spotify' : 'local'
+    });
   },
   
   setCurrentTime: (time) => set({ currentTime: time }),
@@ -110,4 +137,7 @@ export const usePlayerStore = create<PlayerState>((set, get) => ({
   toggleRepeat: () => set((state) => ({
     repeat: state.repeat === 'off' ? 'all' : state.repeat === 'all' ? 'one' : 'off'
   })),
+
+  setSpotifyDeviceId: (id) => set({ spotifyDeviceId: id }),
+  setActiveDevice: (device) => set({ activeDevice: device }),
 }));

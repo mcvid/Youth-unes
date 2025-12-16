@@ -13,6 +13,7 @@ const AudioPlayer = () => {
     currentTime,
     volume,
     repeat,
+    activeDevice,
     setCurrentTime,
     setDuration,
     nextSong,
@@ -68,6 +69,12 @@ const AudioPlayer = () => {
   useEffect(() => {
     if (!audioRef.current || !currentSong) return;
 
+    // Only handle if we are the active device
+    if (activeDevice !== 'local') {
+        audioRef.current.pause();
+        return;
+    }
+
     const audio = audioRef.current;
     
     // Only change source if song actually changed
@@ -82,11 +89,11 @@ const AudioPlayer = () => {
         pause();
       });
     }
-  }, [currentSong?.song_id_hash, isPlaying, pause]);
+  }, [currentSong?.song_id_hash, isPlaying, pause, activeDevice]);
 
   // Handle play/pause
   useEffect(() => {
-    if (!audioRef.current) return;
+    if (!audioRef.current || activeDevice !== 'local') return;
 
     const audio = audioRef.current;
     
@@ -98,7 +105,7 @@ const AudioPlayer = () => {
     } else {
       audio.pause();
     }
-  }, [isPlaying, pause]);
+  }, [isPlaying, pause, activeDevice]);
 
   // Handle volume changes
   useEffect(() => {

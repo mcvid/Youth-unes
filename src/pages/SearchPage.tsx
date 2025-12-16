@@ -11,22 +11,22 @@ import { useSpotify } from '@/hooks/useSpotify';
 const SearchPage = () => {
   const [query, setQuery] = useState('');
   const [searchResults, setSearchResults] = useState<Song[]>([]);
-  const [spotifyResults, setSpotifyResults] = useState<any[]>([]);
   const [searching, setSearching] = useState(false);
   const { setCurrentSong, setQueue } = usePlayerStore();
   const { search, isConnected } = useSpotify();
-
+  
   // Search universal cloud database & Spotify
   useEffect(() => {
     const searchSongs = async () => {
       if (!query.trim()) {
         setSearchResults([]);
-        setSpotifyResults([]);
         return;
       }
 
       setSearching(true);
       const lowerQuery = query.toLowerCase();
+      
+      let combinedResults: Song[] = [];
 
       // Parallel search
       const searches = [
@@ -37,7 +37,7 @@ const SearchPage = () => {
           .limit(20)
           .then(({ data }) => {
             if (data) {
-                setSearchResults(data.map(song => ({
+                const cloudResults = data.map(song => ({
                     song_id_hash: song.song_id_hash,
                     title: song.title,
                     artist: song.artist,
@@ -46,7 +46,8 @@ const SearchPage = () => {
                     audio_url: song.audio_url,
                     uploaded_by: song.uploaded_by,
                     cover_url: song.cover_url,
-                })));
+                }));
+                combinedResults = [...combinedResults, ...cloudResults];
             }
           }),
       ];
@@ -55,13 +56,24 @@ const SearchPage = () => {
         searches.push(
           search(query).then((data) => {
              if (data?.tracks?.items) {
-                 setSpotifyResults(data.tracks.items);
+                 const spotifyItems = data.tracks.items.map((track: any) => ({
+                    song_id_hash: track.id,
+                    title: track.name,
+                    artist: track.artists[0].name,
+                    album: track.album.name,
+                    duration: Math.floor(track.duration_ms / 1000),
+                    audio_url: track.preview_url || '',
+                    cover_url: track.album.images[0]?.url,
+                    uploaded_by: 'Spotify'
+                 }));
+                 combinedResults = [...combinedResults, ...spotifyItems];
              }
           })
         );
       }
 
       await Promise.all(searches);
+      setSearchResults(combinedResults);
       setSearching(false);
     };
 
@@ -74,25 +86,7 @@ const SearchPage = () => {
     setQueue(searchResults);
   };
 
-  const handlePlaySpotify = (track: any) => {
-      // For now, we can only play if there is a preview url, or we just log it
-      if (track.preview_url) {
-          const song: Song = {
-              song_id_hash: track.id,
-              title: track.name,
-              artist: track.artists[0].name,
-              album: track.album.name,
-              duration: Math.floor(track.duration_ms / 1000),
-              audio_url: track.preview_url,
-              cover_url: track.album.images[0]?.url,
-              uploaded_by: 'Spotify'
-          };
-          setCurrentSong(song);
-          // Queueing logic for mixed sources is complex, just play single for now
-      } else {
-          window.open(track.external_urls.spotify, '_blank');
-      }
-  };
+
 
   return (
     <div className="pb-32 px-4 pt-6 animate-fade-in">
@@ -117,7 +111,7 @@ const SearchPage = () => {
             <div>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold">
-                  Community Results ({searchResults.length})
+                  Results ({searchResults.length})
                 </h2>
               </div>
               
@@ -128,43 +122,14 @@ const SearchPage = () => {
                       key={song.song_id_hash}
                       song={song}
                       onPlay={handlePlaySong}
-                      showAddToLibrary={true}
+                      showAddToLibrary={song.uploaded_by !== 'Spotify'}
                     />
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground">No community results found.</p>
+                <p className="text-muted-foreground">No results found.</p>
               )}
             </div>
-
-            {isConnected && spotifyResults.length > 0 && (
-                <div>
-                     <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                           Spotify Results <span className="text-xs bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full">Pro</span>
-                        </h2>
-                      </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-                        {spotifyResults.map((track) => (
-                             <SongCard
-                                key={track.id}
-                                song={{
-                                    song_id_hash: track.id,
-                                    title: track.name,
-                                    artist: track.artists[0].name,
-                                    album: track.album.name,
-                                    duration: Math.floor(track.duration_ms / 1000),
-                                    audio_url: track.preview_url || '',
-                                    cover_url: track.album.images[0]?.url,
-                                    uploaded_by: 'Spotify'
-                                }}
-                                onPlay={() => handlePlaySpotify(track)}
-                                showAddToLibrary={false} // Different logic needed for adding to library
-                              />
-                        ))}
-                      </div>
-                </div>
-            )}
         </div>
       ) : (
         <div className="text-center py-20 glass rounded-xl">
