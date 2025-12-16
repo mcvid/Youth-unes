@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useSpotifyStore } from '@/store/spotifyStore';
-import { fetchUserTopItems, fetchUserSavedTracks } from '@/services/spotify';
+import { fetchUserTopItems, fetchUserSavedTracks, fetchUserPlaylists, fetchRecommendations } from '@/services/spotify';
 
 const Home = () => {
   const { myLibrary, cloudSongs, setCloudSongs } = useLibraryStore();
@@ -20,9 +20,18 @@ const Home = () => {
   const [showDetails, setShowDetails] = useState(false);
   
   // Spotify Integration
+
+
+  useEffect(() => {
+    refreshLibrary();
+  }, []);
+
+  // Spotify Integration State
   const { accessToken } = useSpotifyStore();
   const [spotifyTopTracks, setSpotifyTopTracks] = useState<Song[]>([]);
   const [spotifySavedTracks, setSpotifySavedTracks] = useState<Song[]>([]);
+  const [spotifyPlaylists, setSpotifyPlaylists] = useState<any[]>([]);
+  const [recommendations, setRecommendations] = useState<Song[]>([]);
 
   const navigate = useNavigate();
 
@@ -30,25 +39,33 @@ const Home = () => {
     refreshLibrary();
   }, []);
 
-  // Fetch Spotify Data
+  // Fetch Spotify Data (Top Tracks, Playlists, Recommendations)
   useEffect(() => {
     const fetchSpotifyData = async () => {
         if (!accessToken) return;
         try {
+            // 1. Fetch User's Top Tracks
             const topTracks = await fetchUserTopItems(accessToken, 'tracks');
+            let topTrackIds: string[] = [];
+            
             if (topTracks.items) {
-                setSpotifyTopTracks(topTracks.items.map((t: any) => ({
-                    song_id_hash: t.id,
-                    title: t.name,
-                    artist: t.artists[0].name,
-                    album: t.album.name,
-                    duration: Math.floor(t.duration_ms / 1000),
-                    audio_url: t.preview_url || '', // We might default to empty if premium player handles it by ID
-                    cover_url: t.album.images[0]?.url,
-                    uploaded_by: 'Spotify'
-                })));
+                const mappedTopTracks = topTracks.items.map((t: any) => {
+                    topTrackIds.push(t.id); // Collect IDs for seeding recommendations
+                    return {
+                        song_id_hash: t.id,
+                        title: t.name,
+                        artist: t.artists[0].name,
+                        album: t.album.name,
+                        duration: Math.floor(t.duration_ms / 1000),
+                        audio_url: t.preview_url || '',
+                        cover_url: t.album.images[0]?.url,
+                        uploaded_by: 'Spotify'
+                    };
+                });
+                setSpotifyTopTracks(mappedTopTracks);
             }
 
+            // 2. Fetch User's Saved Tracks (Likes)
             const savedTracks = await fetchUserSavedTracks(accessToken);
             if (savedTracks.items) {
                 setSpotifySavedTracks(savedTracks.items.map((item: any) => ({
@@ -62,6 +79,31 @@ const Home = () => {
                     uploaded_by: 'Spotify'
                 })));
             }
+
+            // 3. Fetch User's Playlists
+            const playlists = await fetchUserPlaylists(accessToken);
+            if (playlists.items) {
+                setSpotifyPlaylists(playlists.items);
+            }
+
+            // 4. Fetch Recommendations (seeded by top tracks)
+            // We use the first 5 top tracks as seeds
+            if (topTrackIds.length > 0) {
+                const recs = await fetchRecommendations(accessToken, topTrackIds);
+                if (recs.tracks) {
+                    setRecommendations(recs.tracks.map((t: any) => ({
+                        song_id_hash: t.id,
+                        title: t.name,
+                        artist: t.artists[0].name,
+                        album: t.album.name,
+                        duration: Math.floor(t.duration_ms / 1000),
+                        audio_url: t.preview_url || '',
+                        cover_url: t.album.images[0]?.url,
+                        uploaded_by: 'Spotify'
+                    })));
+                }
+            }
+
         } catch (e) {
             console.error("Failed to fetch Spotify data", e);
         }
@@ -161,6 +203,60 @@ const Home = () => {
                   onViewDetails={handleViewDetails}
                 />
               ))}
+            </div>
+          </section>
+        )}
+
+        {/* Spotify Recommendations - Automatically loaded based on top tracks */}
+        {recommendations.length > 0 && (
+          <section className="mb-8">
+             <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold flex items-center gap-2">
+                  Recommended for You <span className="text-xs bg-purple-500/20 text-purple-500 px-2 py-0.5 rounded-full">Spotify</span>
+              </h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {recommendations.map((song) => (
+                <SongCard
+                  key={song.song_id_hash}
+                  song={song}
+                  onPlay={handlePlaySong}
+                  onViewDetails={handleViewDetails}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* User's Spotify Playlists - Horizontal Scrollable List */}
+        {spotifyPlaylists.length > 0 && (
+          <section className="mb-8">
+            <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+                Your Playlists <span className="text-xs bg-green-500/20 text-green-500 px-2 py-0.5 rounded-full">Spotify</span>
+            </h2>
+            <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
+                {spotifyPlaylists.map((playlist) => (
+                    <div 
+                        key={playlist.id} 
+                        className="flex-shrink-0 w-40 cursor-pointer group"
+                        onClick={() => window.open(playlist.external_urls.spotify, '_blank')}
+                    >
+                        <div className="relative aspect-square mb-2 overflow-hidden rounded-md">
+                             <img 
+                                src={playlist.images?.[0]?.url || '/placeholder.png'} 
+                                alt={playlist.name}
+                                className="object-cover w-full h-full transition-transform group-hover:scale-105"
+                             />
+                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                 <ChevronRight className="text-white w-8 h-8" />
+                             </div>
+                        </div>
+                        <h3 className="font-semibold truncate">{playlist.name}</h3>
+                        <p className="text-sm text-muted-foreground truncate">
+                            {playlist.tracks.total} tracks
+                        </p>
+                    </div>
+                ))}
             </div>
           </section>
         )}
